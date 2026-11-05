@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ice Bank Tutorials</title>
+  <meta name="description" content="Foundation tutorials for testing Ice Bank: SQL, HTTP and APIs, DevTools, Git, manual QA and framework hygiene.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button type="button" class="menu-toggle" id="menu-toggle" aria-controls="sidebar" aria-expanded="false">
+        <span aria-hidden="true">&#9776;</span> Lessons
+      </button>
+      <a class="brand" href="#home" aria-label="Ice Bank Tutorials, home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <circle cx="16" cy="16" r="15" fill="#F5F9FC"/>
+          <path d="M5 21 L12 11 L15.5 15.5 L19 9 L27 21 Z" fill="#4FA3D9"/>
+          <path d="M12 11 L13.8 13.4 L12 14.4 L10.4 13.3 Z M19 9 L21.3 12.8 L19.2 13.9 L17.4 12.2 Z" fill="#FFFFFF"/>
+        </svg>
+        <span class="brand-text"><strong>Ice Bank</strong> Tutorials</span>
+      </a>
+      <div class="overall" aria-live="off">
+        <span class="overall-label" id="overall-label">Overall progress</span>
+        <div class="bar bar-light" role="progressbar" aria-labelledby="overall-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="overall-bar">
+          <span class="bar-fill" style="width:0%"></span>
+        </div>
+        <span class="overall-value" id="overall-value">0%</span>
+      </div>
+      <div class="topbar-actions">
+        <a class="btn btn-ghost-light" href="http://localhost:3000/swagger" target="_blank" rel="noopener">Swagger <span class="sr-only">(opens in a new tab)</span></a>
+        <button type="button" class="btn btn-ghost-light" id="export-btn">Export progress</button>
+        <button type="button" class="btn btn-ghost-light" id="import-btn">Import progress</button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+        <button type="button" class="btn btn-ghost-light btn-danger-light" id="reset-btn">Reset progress</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="storage-banner" id="storage-banner" role="status" hidden>
+    Your browser is blocking local storage, so ticks and notes will be lost when you close this tab.
+    Use <strong>Export progress</strong> before you leave, and <strong>Import progress</strong> next time.
+  </div>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Tutorials and lessons">
+      <div id="sidebar-content"></div>
+    </nav>
+    <div class="sidebar-scrim" id="sidebar-scrim" hidden></div>
+    <main class="main" id="main" tabindex="-1">
+      <noscript>
+        <div class="card"><p>This site needs JavaScript. Please enable it and reload the page.</p></div>
+      </noscript>
+      <div id="view"></div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog class="dialog" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <form method="dialog">
+      <h2 id="confirm-title">Are you sure?</h2>
+      <p id="confirm-message"></p>
+      <div class="dialog-actions">
+        <button type="submit" value="cancel" class="btn btn-secondary" id="confirm-cancel">Cancel</button>
+        <button type="submit" value="ok" class="btn btn-danger" id="confirm-ok">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="content/01-sql.js"></script>
+  <script src="content/02-http.js"></script>
+  <script src="content/03-devtools.js"></script>
+  <script src="content/04-git.js"></script>
+  <script src="content/05-manual-qa.js"></script>
+  <script src="content/06-framework.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

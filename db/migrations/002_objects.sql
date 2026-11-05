@@ -242,8 +242,11 @@ BEGIN
     RETURN NEW;
   END IF;
   IF TG_OP = 'DELETE' THEN
+    -- The flag alone is not enough: it only counts inside reset_sandbox(), which runs as its
+    -- owner (SECURITY DEFINER), never as one of the application or test roles.
     IF OLD.status = 'POSTED'
-       AND current_setting('icebank.reset_sandbox', true) IS DISTINCT FROM OLD.sandbox_id::TEXT THEN
+       AND (current_setting('icebank.reset_sandbox', true) IS DISTINCT FROM OLD.sandbox_id::TEXT
+            OR current_user IN ('icebank_app', 'qa_writer', 'qa_reader')) THEN
       RAISE EXCEPTION 'IMMUTABLE_TRANSACTION: POSTED transaction % cannot be deleted', OLD.id
         USING ERRCODE = 'P0001';
     END IF;
@@ -296,7 +299,8 @@ GROUP BY e.sandbox_id, e.sender_customer_id, (e.created_at AT TIME ZONE 'America
 -- --------------------------------------------------------------------------------------------
 -- Reset: removes every row of one sandbox (the seed then re-inserts the same rows).
 -- --------------------------------------------------------------------------------------------
-CREATE FUNCTION reset_sandbox(p_sandbox_id INT) RETURNS VOID LANGUAGE plpgsql AS $$
+CREATE FUNCTION reset_sandbox(p_sandbox_id INT) RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   PERFORM set_config('icebank.reset_sandbox', p_sandbox_id::TEXT, true);
   DELETE FROM audit_log WHERE sandbox_id = p_sandbox_id;

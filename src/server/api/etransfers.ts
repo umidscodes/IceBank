@@ -211,7 +211,7 @@ export const send = route({ auth: "customer", body: SendBody, idempotent: true }
     } else {
       await sendMail(db, sb, email, "ETRANSFER", `INTERAC e-Transfer: ${sender.name} sent you money`,
         `${sender.name} sent you $${amount} (CAD).${b.message ? `\nMessage: ${b.message}` : ""}\nSign in to Ice Bank to deposit it. Security question: ${b.securityQuestion}\nThis transfer expires in ${EXPIRY_DAYS} days.`,
-        { link: `/etransfers/received/${et.id}` });
+        { link: `/etransfer/received/${et.id}` });
       if (recipient) await notifyCustomer(db, sb, recipient.id, "MONEY_MOVEMENT", "Interac e-Transfer received", `${sender.name} sent you $${amount}. Accept it to deposit the money.`);
     }
     await notifyCustomer(db, sb, cid, "MONEY_MOVEMENT", "Interac e-Transfer sent", `You sent $${amount} to ${b.recipientName}.`);

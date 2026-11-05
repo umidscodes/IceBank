@@ -69,7 +69,8 @@ doc({ method: "get", path: "/accounts/{id}/statements", tag: "Accounts", summary
   responses: { 200: { schema: z.array(StatementSchema), description: "Statements" } }, errors: { 404: "Account not found." } });
 doc({ method: "get", path: "/accounts/{id}/statements/{month}.pdf", tag: "Accounts", summary: "Download a monthly statement (PDF)", auth: "bearer",
   params: z.object({ id: z.string().openapi({ example: "1" }), month: z.string().openapi({ example: "2026-10", description: "yyyy-mm" }) }),
-  responses: { 200: { schema: z.string().openapi({ format: "binary" }), contentType: "application/pdf", description: "PDF (attachment)" } },
+  query: z.object({ inline: z.enum(["1"]).optional().openapi({ description: "1 = show in the browser instead of downloading" }) }),
+  responses: { 200: { schema: z.string().openapi({ format: "binary" }), contentType: "application/pdf", description: "PDF (attachment, or inline with ?inline=1)" } },
   errors: { 404: "Statement not found." } });
 
 // ---- helpers ----------------------------------------------------------------------------------
@@ -224,7 +225,7 @@ export const statementPdf = route({ auth: "customer" }, async (ctx) => {
   const pdf = await renderStatementPdf({ account: accountView(acct), customer: cust, statement: st, rows: st.rows.map(transactionView) });
   return {
     status: 200,
-    headers: { "Content-Disposition": `attachment; filename="icebank-statement-${String(acct.account_number).slice(-4)}-${m[1]}.pdf"` },
+    headers: { "Content-Disposition": `${ctx.req.nextUrl.searchParams.get("inline") === "1" ? "inline" : "attachment"}; filename="icebank-statement-${String(acct.account_number).slice(-4)}-${m[1]}.pdf"` },
     raw: { data: pdf, contentType: "application/pdf" },
   };
 });

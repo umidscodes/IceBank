@@ -44,7 +44,7 @@ const RegisterBody = z.object({
   province: z.enum(PROVINCE_CODES, { error: `must be one of ${PROVINCE_CODES.join(", ")}` }).openapi({ example: "ON" }),
   postalCode: z.string({ error: "is required" }).transform((v) => v.trim().toUpperCase())
     .refine((v) => POSTAL_CODE_RE.test(v), "must be a Canadian postal code in the format A1A 1A1").openapi({ example: "M5J 2T3" }),
-  sin: z.string({ error: "is required" }).refine((v) => normaliseSin(v) !== null, "must be a valid 9-digit SIN").openapi({ example: "046 454 286" }),
+  sin: z.string({ error: "is required" }).refine((v) => normaliseSin(v) !== null, "must be a valid 9-digit SIN").openapi({ example: "193 746 286" }),
   password: Password.openapi({ example: "Glacier#2026" }),
 });
 

@@ -45,7 +45,8 @@ function view(m: Record<string, unknown>) {
 
 /** Which mailbox: the signed-in user's, or ?email= with a sandbox key. */
 function mailbox(ctx: Ctx<unknown, { email?: string }>): { sb: number; email: string } {
-  if (ctx.user) return { sb: ctx.user.sandboxId, email: ctx.user.email };
+  // A sandbox key with ?email= reads that inbox even if the browser also sends login cookies.
+  if (ctx.user && !(ctx.keySandboxId !== null && ctx.query?.email)) return { sb: ctx.user.sandboxId, email: ctx.user.email };
   if (ctx.keySandboxId === null) throw unauthorized("Sign in, or send X-Sandbox-Key with ?email= to read a test inbox.");
   const email = ctx.query?.email;
   if (!email) throw fieldError("email", "is required when using X-Sandbox-Key");

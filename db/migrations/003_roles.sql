@@ -15,7 +15,10 @@ BEGIN
   END IF;
 END $$;
 
-GRANT CONNECT ON DATABASE icebank TO icebank_app, qa_reader, qa_writer;
+DO $$
+BEGIN
+  EXECUTE format('GRANT CONNECT ON DATABASE %I TO icebank_app, qa_reader, qa_writer', current_database());
+END $$;
 GRANT USAGE ON SCHEMA public TO icebank_app, qa_reader, qa_writer;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO icebank_app, qa_writer;

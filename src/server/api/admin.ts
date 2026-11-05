@@ -51,7 +51,7 @@ doc({ method: "post", path: "/admin/users/{id}/unlock", tag, summary: "Unlock a 
   description: "Sets status ACTIVE and failedLoginCount 0.", responses: { 200: { schema: z.object({ userId: Id, status: z.literal("ACTIVE"), failedLoginCount: z.literal(0) }), description: "Unlocked" } },
   errors: { 404: "User not found.", 409: "This user is not locked." } });
 doc({ method: "get", path: "/admin/deposits", tag, summary: "List cheque deposits", auth: "admin", query: StatusQuery(["PENDING", "APPROVED", "REJECTED"]),
-  responses: { 200: { schema: page(DepositSchema.extend({ customerId: Id, customerName: z.string() })), description: "Deposits (oldest pending first)" } } });
+  responses: { 200: { schema: page(DepositSchema.extend({ customerId: Id, customerName: z.string(), accountNumber: z.string() })), description: "Deposits (oldest pending first)" } } });
 doc({ method: "get", path: "/admin/deposits/{id}/images/{side}", tag, summary: "View a cheque image", auth: "admin",
   params: z.object({ id: z.string(), side: z.enum(["front", "back"]) }), responses: { 200: { schema: z.string().openapi({ format: "binary" }), contentType: "image/png", description: "Image" } },
   errors: { 404: "Deposit not found." } });
@@ -146,9 +146,9 @@ export const listDeposits = route({ auth: "admin", query: StatusQuery(["PENDING"
   const { page: p, size, status } = ctx.query;
   const where = "d.sandbox_id = $1 AND ($2::text IS NULL OR d.status = $2)";
   const [{ n }] = await query<{ n: number }>(`SELECT count(*)::int AS n FROM cheque_deposits d WHERE ${where}`, [sb, status ?? null]);
-  const rows = await query(`SELECT x.*, c.first_name || ' ' || c.last_name AS customer_name FROM (${DEPOSIT_SELECT} WHERE ${where}) x
-      JOIN customers c ON c.sandbox_id = $1 AND c.id = x.customer_id ORDER BY (x.status = 'PENDING') DESC, x.created_at, x.id LIMIT ${size} OFFSET ${p * size}`, [sb, status ?? null]);
-  return ok(pageResult(rows.map((r) => ({ ...depositView(r), customerId: Number(r.customer_id), customerName: r.customer_name })), p, size, n));
+  const rows = await query(`SELECT x.*, c.first_name || ' ' || c.last_name AS customer_name, a.account_number FROM (${DEPOSIT_SELECT} WHERE ${where}) x
+      JOIN customers c ON c.sandbox_id = $1 AND c.id = x.customer_id JOIN accounts a ON a.sandbox_id = $1 AND a.id = x.account_id ORDER BY (x.status = 'PENDING') DESC, x.created_at, x.id LIMIT ${size} OFFSET ${p * size}`, [sb, status ?? null]);
+  return ok(pageResult(rows.map((r) => ({ ...depositView(r), customerId: Number(r.customer_id), customerName: r.customer_name, accountNumber: r.account_number })), p, size, n));
 });
 
 export const depositImage = route({ auth: "admin" }, async (ctx) => {

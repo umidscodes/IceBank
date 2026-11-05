@@ -482,7 +482,7 @@ export async function seedSandbox(db: pg.ClientBase, opts: SeedOptions): Promise
   }
   inbox(P.emma.email, "ETRANSFER", "INTERAC e-Transfer: Olivia Singh sent you money",
     `Olivia Singh sent you $120.00 (CAD).\nMessage: Concert tickets\nSign in to Ice Bank to deposit it. Security question: Favourite band?`,
-    olToEmma.d, `/etransfers/received`);
+    olToEmma.d, `/etransfer/received`);
 
   // ---- audit log (admin actions) ---------------------------------------------------------------
   let auditId = 1;

@@ -1,0 +1,271 @@
+/* Ice Bank Tutorials. Same palette as the app: deep navy, glacier blue, frost white. */
+:root {
+  --navy: #0B2545;
+  --navy-700: #13315C;
+  --navy-600: #1C3F6E;
+  --glacier: #4FA3D9;
+  --glacier-600: #2F86BF;
+  --link: #1D6A9E;          /* 5.6:1 on white, 5.3:1 on frost */
+  --frost: #F5F9FC;
+  --ink: #1B2A3A;
+  --muted: #4F5F70;         /* 6.4:1 on white */
+  --line: #DCE6EF;
+  --line-strong: #B9C7D6;
+  --success: #1E7F4F;
+  --success-bg: #E6F4EC;
+  --alert: #B42318;
+  --alert-bg: #FDECEA;
+  --warn: #8A5C00;
+  --warn-bg: #FFF4D6;
+  --info-bg: #EAF4FB;
+  --code-bg: #0B2545;
+  --code-ink: #EAF2F9;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(11, 37, 69, 0.05), 0 4px 16px rgba(11, 37, 69, 0.04);
+  --font: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+  --topbar-h: 64px;
+  --sidebar-w: 300px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: calc(var(--topbar-h) + 16px); }
+html, body { margin: 0; background: var(--frost); color: var(--ink); }
+body { font-family: var(--font); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+a { color: var(--link); text-underline-offset: 2px; }
+a:hover { color: var(--navy); }
+:focus-visible { outline: 3px solid var(--glacier-600); outline-offset: 2px; border-radius: 4px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 100; background: #fff; color: var(--navy); padding: 8px 14px; border-radius: 8px; font-weight: 600; }
+.skip-link:focus { top: 12px; }
+
+/* ---- top bar ------------------------------------------------------------------------------ */
+.topbar { position: sticky; top: 0; z-index: 40; background: var(--navy); color: #fff; box-shadow: 0 2px 8px rgba(11, 37, 69, 0.25); }
+.topbar-inner { display: flex; align-items: center; gap: 20px; min-height: var(--topbar-h); padding: 8px 24px; flex-wrap: wrap; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-size: 1.1rem; white-space: nowrap; }
+.brand:hover { color: #fff; }
+.brand-mark { width: 32px; height: 32px; }
+.brand-text strong { font-weight: 700; }
+.overall { display: flex; align-items: center; gap: 10px; flex: 1 1 220px; min-width: 200px; max-width: 420px; }
+.overall-label { font-size: 0.85rem; color: #D6E4F0; white-space: nowrap; }
+.overall-value { font-weight: 700; min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.menu-toggle { display: none; }
+.focus-light :focus-visible, .topbar :focus-visible { outline-color: #9FD0F0; }
+
+/* ---- buttons ------------------------------------------------------------------------------ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: inherit; font-weight: 600; font-size: 0.9rem;
+  line-height: 1.2; padding: 9px 14px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn-primary { background: var(--navy); color: #fff; }
+.btn-primary:hover { background: var(--navy-600); color: #fff; }
+.btn-secondary { background: #fff; color: var(--navy); border-color: var(--line-strong); }
+.btn-secondary:hover { border-color: var(--navy); color: var(--navy); }
+.btn-danger { background: var(--alert); color: #fff; }
+.btn-danger:hover { background: #8F1B12; }
+.btn-ghost-light { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.35); }
+.btn-ghost-light:hover { background: rgba(255, 255, 255, 0.12); color: #fff; border-color: rgba(255, 255, 255, 0.6); }
+.btn-danger-light:hover { background: rgba(253, 236, 234, 0.16); }
+.btn-small { padding: 5px 10px; font-size: 0.8rem; }
+
+/* ---- progress bars ------------------------------------------------------------------------ */
+.bar { position: relative; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; flex: 1; }
+.bar-light { background: rgba(255, 255, 255, 0.2); }
+.bar-fill { position: absolute; inset: 0 auto 0 0; background: var(--glacier-600); border-radius: 99px; transition: width 0.25s ease; }
+.bar-light .bar-fill { background: var(--glacier); }
+.bar.complete .bar-fill { background: var(--success); }
+
+/* ---- banner ------------------------------------------------------------------------------- */
+.storage-banner { background: var(--warn-bg); color: #5C3D00; border-bottom: 1px solid #F0D58C; padding: 10px 24px; font-size: 0.92rem; }
+
+/* ---- layout ------------------------------------------------------------------------------- */
+.layout { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); min-height: calc(100vh - var(--topbar-h)); }
+.sidebar {
+  position: sticky; top: var(--topbar-h); align-self: start; height: calc(100vh - var(--topbar-h)); overflow-y: auto;
+  background: #fff; border-right: 1px solid var(--line); padding: 20px 14px 40px;
+}
+.main { padding: 32px 40px 80px; min-width: 0; }
+.main:focus { outline: none; }
+#view { max-width: 920px; margin: 0 auto; }
+
+/* ---- sidebar ------------------------------------------------------------------------------ */
+.side-home { display: block; padding: 8px 10px; margin-bottom: 8px; border-radius: 8px; color: var(--navy); font-weight: 600; text-decoration: none; }
+.side-home:hover, .side-home[aria-current="page"] { background: var(--info-bg); }
+.side-tutorial { border-top: 1px solid var(--line); padding: 10px 0; }
+.side-tutorial-head { display: flex; align-items: center; gap: 4px; }
+.side-expand {
+  flex: none; width: 30px; height: 30px; border: 0; background: transparent; border-radius: 6px; color: var(--muted); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem;
+}
+.side-expand:hover { background: var(--frost); color: var(--navy); }
+.side-expand .chev { display: inline-block; transition: transform 0.15s; }
+.side-expand[aria-expanded="true"] .chev { transform: rotate(90deg); }
+.side-tutorial-link { flex: 1; display: block; padding: 4px 6px; border-radius: 6px; color: var(--navy); text-decoration: none; font-weight: 600; font-size: 0.95rem; line-height: 1.35; }
+.side-tutorial-link:hover, .side-tutorial-link[aria-current="page"] { background: var(--info-bg); }
+.side-num { display: inline-block; min-width: 1.4em; color: var(--glacier-600); font-weight: 700; }
+.side-progress { display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 40px; font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.side-progress .bar { height: 6px; }
+.side-lessons { list-style: none; margin: 4px 0 0; padding: 0 0 0 30px; }
+.side-lessons[hidden] { display: none; }
+.side-lessons a {
+  display: flex; gap: 8px; align-items: flex-start; padding: 5px 8px; border-radius: 6px; color: var(--ink); text-decoration: none;
+  font-size: 0.88rem; line-height: 1.35;
+}
+.side-lessons a:hover { background: var(--frost); }
+.side-lessons a[aria-current="page"] { background: var(--info-bg); color: var(--navy); font-weight: 600; box-shadow: inset 3px 0 0 var(--glacier-600); }
+.lesson-dot { flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: 50%; border: 2px solid var(--line-strong); background: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
+.lesson-dot.partial { border-color: var(--glacier-600); background: linear-gradient(90deg, var(--glacier-600) 50%, #fff 50%); }
+.lesson-dot.done { border-color: var(--success); background: var(--success); }
+
+/* ---- cards and typography ----------------------------------------------------------------- */
+.card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px 28px; margin-bottom: 24px; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 700; color: var(--glacier-600); margin: 0 0 6px; }
+.eyebrow { color: #24709F; }
+h1, h2, h3, h4 { color: var(--navy); line-height: 1.25; }
+h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+h2 { font-size: 1.35rem; margin: 0 0 14px; }
+h3 { font-size: 1.08rem; margin: 22px 0 8px; }
+h4 { font-size: 0.98rem; margin: 18px 0 6px; }
+.lede { font-size: 1.08rem; color: var(--muted); margin: 0 0 4px; }
+.prose p { margin: 0 0 14px; }
+.prose ul, .prose ol { margin: 0 0 14px; padding-left: 1.4em; }
+.prose li { margin: 4px 0; }
+.prose li > ul, .prose li > ol { margin: 4px 0; }
+.prose > :last-child { margin-bottom: 0; }
+code { font-family: var(--mono); font-size: 0.88em; background: #EDF3F8; color: #12304F; padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+kbd { font-family: var(--mono); font-size: 0.82em; background: #fff; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; }
+.prose table, table.ref { width: 100%; border-collapse: collapse; margin: 6px 0 16px; font-size: 0.92rem; }
+.prose th, .prose td, table.ref th, table.ref td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.prose th, table.ref th { background: var(--frost); color: var(--navy); font-weight: 600; }
+.table-wrap { overflow-x: auto; }
+.callout { border-left: 4px solid var(--glacier-600); background: var(--info-bg); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 0 0 16px; }
+.callout.warn { border-left-color: #C98A00; background: var(--warn-bg); }
+.callout.rule { border-left-color: var(--navy); background: #EEF2F7; }
+.callout > :last-child { margin-bottom: 0; }
+.callout strong:first-child { color: var(--navy); }
+
+.lesson-header { margin-bottom: 20px; }
+.breadcrumb { font-size: 0.88rem; color: var(--muted); margin-bottom: 10px; }
+.breadcrumb a { color: var(--link); }
+.meta-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 0.9rem; margin-top: 6px; }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 99px; background: var(--info-bg); color: var(--navy); font-size: 0.8rem; font-weight: 600; }
+.pill.done { background: var(--success-bg); color: var(--success); }
+
+/* ---- examples ----------------------------------------------------------------------------- */
+.example { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 0 0 18px; background: #fff; }
+.example-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--frost); border-bottom: 1px solid var(--line); }
+.example-title { font-weight: 600; color: var(--navy); font-size: 0.95rem; flex: 1; margin: 0; }
+.lang { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.example pre { margin: 0; padding: 16px 18px; background: var(--code-bg); color: var(--code-ink); overflow-x: auto; font-family: var(--mono); font-size: 0.85rem; line-height: 1.55; tab-size: 2; }
+.example pre code { background: none; color: inherit; padding: 0; font-size: inherit; overflow-wrap: normal; }
+.example-note { padding: 10px 14px; font-size: 0.9rem; color: var(--ink); border-top: 1px solid var(--line); background: #fff; }
+.copy-btn.copied { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+
+/* ---- exercises ---------------------------------------------------------------------------- */
+.exercises { list-style: none; margin: 0; padding: 0; }
+.exercise { display: flex; gap: 12px; align-items: flex-start; padding: 14px 4px; border-bottom: 1px solid var(--line); }
+.exercise:last-child { border-bottom: 0; }
+.exercise input[type="checkbox"] { flex: none; width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--success); cursor: pointer; }
+.exercise label { cursor: pointer; flex: 1; }
+.exercise .ex-num { font-weight: 700; color: var(--navy); margin-right: 4px; }
+.exercise.checked label { color: var(--muted); }
+.exercise.checked .ex-num { color: var(--success); }
+.exercise-summary { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; color: var(--muted); font-size: 0.9rem; }
+.exercise-summary .bar { max-width: 220px; }
+
+/* ---- notes -------------------------------------------------------------------------------- */
+.notes textarea {
+  width: 100%; min-height: 150px; resize: vertical; font: inherit; font-size: 0.95rem; line-height: 1.5; color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: 10px; padding: 12px 14px; background: #fff;
+}
+.notes textarea:focus { border-color: var(--glacier-600); outline: 3px solid rgba(47, 134, 191, 0.35); outline-offset: 0; }
+.notes-status { font-size: 0.82rem; color: var(--muted); margin-top: 6px; min-height: 1.3em; }
+.hint { font-size: 0.88rem; color: var(--muted); }
+
+/* ---- lesson nav --------------------------------------------------------------------------- */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a { flex: 1; display: block; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; text-decoration: none; color: var(--navy); }
+.pager a:hover { border-color: var(--glacier-600); }
+.pager .dir { display: block; font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.pager .next { text-align: right; }
+.pager .spacer { flex: 1; }
+
+/* ---- home and tutorial overview ----------------------------------------------------------- */
+.hero { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-600) 100%); color: #fff; border: 0; }
+.hero h1 { color: #fff; }
+.hero .lede { color: #D6E4F0; }
+.hero a { color: #BFE1F6; }
+.hero .btn-primary { background: #fff; color: var(--navy); }
+.hero .btn-primary:hover { background: var(--frost); }
+.hero :focus-visible { outline-color: #9FD0F0; }
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; margin-bottom: 24px; }
+.tile { display: flex; flex-direction: column; gap: 8px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; text-decoration: none; color: var(--ink); box-shadow: var(--shadow); }
+.tile:hover { border-color: var(--glacier-600); color: var(--ink); }
+.tile h3 { margin: 0; }
+.tile p { margin: 0; color: var(--muted); font-size: 0.92rem; flex: 1; }
+.tile .tile-progress { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lesson-list { list-style: none; padding: 0; margin: 0; counter-reset: l; }
+.lesson-list li { border-bottom: 1px solid var(--line); }
+.lesson-list li:last-child { border-bottom: 0; }
+.lesson-list a { display: flex; gap: 12px; align-items: center; padding: 12px 4px; text-decoration: none; color: var(--ink); }
+.lesson-list a:hover .ll-title { color: var(--link); text-decoration: underline; }
+.ll-num { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--info-bg); color: var(--navy); font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; }
+.ll-num.done { background: var(--success); color: #fff; }
+.ll-title { flex: 1; font-weight: 600; color: var(--navy); }
+.ll-count { font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---- toast and dialog --------------------------------------------------------------------- */
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); opacity: 0; pointer-events: none; z-index: 60;
+  background: var(--navy); color: #fff; padding: 12px 18px; border-radius: 10px; box-shadow: 0 8px 24px rgba(11, 37, 69, 0.3);
+  transition: opacity 0.2s, transform 0.2s; max-width: calc(100vw - 32px); font-size: 0.92rem;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--alert); }
+.dialog { border: 0; border-radius: var(--radius); padding: 24px 28px; max-width: 440px; width: calc(100vw - 32px); box-shadow: 0 20px 50px rgba(11, 37, 69, 0.35); color: var(--ink); }
+.dialog::backdrop { background: rgba(11, 37, 69, 0.55); }
+.dialog h2 { margin-top: 0; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+/* ---- responsive --------------------------------------------------------------------------- */
+@media (max-width: 1180px) {
+  .main { padding: 28px 28px 80px; }
+  :root { --sidebar-w: 280px; }
+}
+@media (max-width: 1023px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .menu-toggle {
+    display: inline-flex; align-items: center; gap: 6px; font: inherit; font-weight: 600; font-size: 0.9rem; color: #fff; background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 8px; padding: 7px 12px; cursor: pointer;
+  }
+  .sidebar {
+    position: fixed; z-index: 50; top: 0; left: 0; bottom: 0; height: 100vh; width: min(320px, 86vw); transform: translateX(-105%);
+    transition: transform 0.2s ease; box-shadow: 4px 0 24px rgba(11, 37, 69, 0.2); visibility: hidden;
+  }
+  body.sidebar-open .sidebar { transform: translateX(0); visibility: visible; }
+  .sidebar-scrim { position: fixed; inset: 0; z-index: 45; background: rgba(11, 37, 69, 0.45); }
+  .overall { order: 3; flex-basis: 100%; max-width: none; }
+  .topbar-actions { order: 4; margin-left: 0; }
+}
+@media (max-width: 640px) {
+  .topbar-inner { padding: 8px 16px; gap: 10px; }
+  .main { padding: 20px 16px 64px; }
+  .card { padding: 18px 16px; }
+  h1 { font-size: 1.55rem; }
+  .pager { flex-direction: column; }
+  .btn { padding: 8px 10px; font-size: 0.82rem; }
+  .example pre { font-size: 0.8rem; padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+@media print {
+  .topbar, .sidebar, .pager, .notes, .copy-btn, .storage-banner { display: none !important; }
+  .layout { display: block; }
+  .example pre { background: #fff; color: #000; border-top: 1px solid #ccc; white-space: pre-wrap; }
+}

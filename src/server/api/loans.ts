@@ -47,6 +47,8 @@ doc({
   responses: { 201: { schema: AppSchema, description: "Application decided", headers: { Location: "/api/v1/loans/applications/{id}" } } },
   errors: { 404: "Account not found.", 409: "You already have an application in review.", 422: "Loans can only be paid into a chequing account." },
 });
+doc({ method: "get", path: "/loans/applications", tag: "Loans", summary: "List my loan applications (newest first)", auth: "bearer",
+  responses: { 200: { schema: z.array(AppSchema), description: "Applications" } } });
 doc({ method: "get", path: "/loans/applications/{id}", tag: "Loans", summary: "Get a loan application", auth: "bearer", params: IdParam,
   responses: { 200: { schema: AppSchema, description: "Application" } }, errors: { 404: "Loan application not found." } });
 doc({ method: "get", path: "/loans", tag: "Loans", summary: "List my loans", auth: "bearer", responses: { 200: { schema: z.array(LoanSchema), description: "Loans" } } });
@@ -123,6 +125,11 @@ export const apply = route({ auth: "customer", body: ApplyBody }, async (ctx) =>
     const app = (await one(db, "SELECT * FROM loan_applications WHERE sandbox_id = $1 AND id = $2", [sb, row.id]))!;
     return created(appView(app), `/api/v1/loans/applications/${row.id}`);
   }, { actorUserId: u.userId });
+});
+
+export const listApplications = route({ auth: "customer" }, async (ctx) => {
+  const rows = await query("SELECT * FROM loan_applications WHERE sandbox_id = $1 AND customer_id = $2 ORDER BY created_at DESC, id DESC", [ctx.user!.sandboxId, customerId(ctx.user)]);
+  return ok(rows.map(appView));
 });
 
 export const getApplication = route({ auth: "customer" }, async (ctx) => {
