@@ -26,6 +26,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: npx tsx scripts/reset.ts
+        env:
+          ICEBANK_DB_DEBUG: '1'
         continue-on-error: true
       - name: Smoke tests (start embedded PostgreSQL, migrate, seed, run every business rule)
         run: npm test

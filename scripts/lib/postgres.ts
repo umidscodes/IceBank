@@ -54,6 +54,19 @@ export async function startPostgres(opts: { quiet?: boolean } = {}): Promise<Run
     );
   }
 
+  // Keep the last PostgreSQL log lines so a failed start can explain itself.
+  const recent: string[] = [];
+  const remember = (m: unknown) => {
+    const text = m instanceof Error ? m.message : String(m ?? "");
+    for (const line of text.split(/\r?\n/)) if (line.trim()) recent.push(line.trim());
+    if (recent.length > 40) recent.splice(0, recent.length - 40);
+    if (process.env.ICEBANK_DB_DEBUG) process.stderr.write(`[db] ${text}\n`);
+  };
+  const explain = (step: string, err: unknown) => new Error(
+    `PostgreSQL failed to ${step}${err instanceof Error ? `: ${err.message}` : ""}.\n` +
+    (recent.length ? `Last PostgreSQL output:\n  ${recent.join("\n  ")}\n` : "") +
+    `Data folder: ${DATA_DIR}. If this keeps happening, see "If the embedded database will not start" in the README.`);
+
   const isRoot = typeof process.getuid === "function" && process.getuid() === 0;
   const server = new EmbeddedPostgres({
     databaseDir: DATA_DIR,
@@ -65,21 +78,30 @@ export async function startPostgres(opts: { quiet?: boolean } = {}): Promise<Run
     createPostgresUser: isRoot,
     initdbFlags: ["--encoding=UTF8", "--locale=C"],
     postgresFlags: ["-c", "timezone=UTC", "-c", "max_connections=60"],
-    onLog: () => {},
-    onError: (m: unknown) => { if (!opts.quiet) process.stderr.write(`[db] ${String(m)}`); },
+    onLog: (m: unknown) => remember(m),
+    onError: (m: unknown) => remember(m),
   });
 
   const fresh = !fs.existsSync(path.join(DATA_DIR, "PG_VERSION"));
   if (fresh) {
     fs.mkdirSync(path.dirname(DATA_DIR), { recursive: true });
     if (!opts.quiet) console.log("[db] First run: initialising PostgreSQL data folder ...");
-    await server.initialise();
+    try {
+      await server.initialise();
+    } catch (err) {
+      fs.rmSync(DATA_DIR, { recursive: true, force: true }); // a half-created folder would break the next run
+      throw explain("initialise its data folder", err);
+    }
   }
   // A crash can leave a stale lock file behind; remove it if no server is running.
   const pidFile = path.join(DATA_DIR, "postmaster.pid");
   if (fs.existsSync(pidFile)) fs.rmSync(pidFile, { force: true });
 
-  await server.start();
+  try {
+    await server.start();
+  } catch (err) {
+    throw explain("start", err);
+  }
   if (!opts.quiet) console.log(`[db] PostgreSQL 16 running on localhost:${DB_PORT} (${os.platform()})`);
 
   const admin = new pg.Client({ connectionString: adminUrl("postgres") });
