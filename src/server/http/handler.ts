@@ -273,7 +273,7 @@ async function loadPrincipal(token: string): Promise<Principal | null> {
   const rows = await query<{ id: number; role: Principal["role"]; email: string; status: string; customer_id: number | null; live: boolean }>(
     `SELECT u.id, u.role, u.email, u.status, c.id AS customer_id,
             EXISTS (SELECT 1 FROM refresh_tokens r WHERE r.sandbox_id = u.sandbox_id AND r.session_id = $3
-                     AND r.user_id = u.id AND r.revoked_at IS NULL AND r.expires_at > app_now(u.sandbox_id)) AS live
+                     AND r.user_id = u.id AND r.revoked_at IS NULL) AS live
        FROM users u LEFT JOIN customers c ON c.sandbox_id = u.sandbox_id AND c.user_id = u.id
       WHERE u.sandbox_id = $1 AND u.id = $2`,
     [claims.sbx, Number(claims.sub), claims.sid],

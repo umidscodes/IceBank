@@ -160,9 +160,6 @@ export async function topUpSeries(db: Db, sb: number, seriesId: string) {
        FROM bill_payments WHERE sandbox_id = $1 AND series_id = $2`, [sb, seriesId])).rows;
   const r = rows[0];
   if (!r || !r.first_date) return;
-  const cancelledSeries = await db.query("SELECT 1 FROM bill_payments WHERE sandbox_id = $1 AND series_id = $2 AND status = 'CANCELLED' AND occurrence = $3",
-    [sb, seriesId, r.max_occ]);
-  if (cancelledSeries.rowCount) return; // the last occurrence was cancelled: the series was stopped
   const window = SERIES_WINDOW[r.recurrence] ?? 12;
   let occ = r.max_occ;
   let scheduled = r.scheduled;
