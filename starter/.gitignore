@@ -1,0 +1,20 @@
+# Build output and reports
+target/
+allure-results/
+allure-report/
+.allure/
+
+# Personal config overrides (secrets): e.g. src/test/resources/config/qa.local.properties
+*.local.properties
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db

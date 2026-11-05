@@ -220,3 +220,10 @@ tests/              smoke tests (Vitest)
 tutorials/          static tutorial site
 docs/               SPEC.md, LOCATORS.md
 ```
+
+## 9. Starter test project
+
+`starter/` is a ready-to-run Java test project (Maven, JUnit 5, REST Assured, Selenium, JDBC, Allure) that Tutorials 7 to 10 build on.
+With Ice Bank running, `cd starter && mvn test` runs its API, DB and UI examples against your local app. It never resets your data
+or moves the clock unless you ask for the `destructive` tests. Setup, commands, environments and the project map are in
+[starter/README.md](starter/README.md).

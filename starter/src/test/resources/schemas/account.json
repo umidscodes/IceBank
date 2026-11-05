@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Account",
+  "description": "One Ice Bank account as returned by GET /api/v1/accounts/{id} (and each item of GET /api/v1/accounts). Money is a string with exactly 2 decimals.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id", "accountNumber", "type", "displayName", "nickname", "currency", "balance", "availableBalance",
+    "status", "creditLimit", "availableCredit", "minimumPayment", "interestRate", "openedAt"
+  ],
+  "definitions": {
+    "money": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+    "moneyOrNull": { "type": ["string", "null"], "pattern": "^-?\\d+\\.\\d{2}$" }
+  },
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "accountNumber": { "type": "string", "pattern": "^999-\\d{5}-\\d{7}$" },
+    "type": { "enum": ["CHEQUING", "SAVINGS", "CREDIT", "LOAN"] },
+    "displayName": { "type": "string", "minLength": 1 },
+    "nickname": { "type": ["string", "null"], "minLength": 1, "maxLength": 30 },
+    "currency": { "enum": ["CAD"] },
+    "balance": { "$ref": "#/definitions/money" },
+    "availableBalance": { "$ref": "#/definitions/money" },
+    "status": { "enum": ["OPEN", "FROZEN", "CLOSED"] },
+    "creditLimit": { "$ref": "#/definitions/moneyOrNull" },
+    "availableCredit": { "$ref": "#/definitions/moneyOrNull" },
+    "minimumPayment": { "$ref": "#/definitions/moneyOrNull" },
+    "interestRate": { "type": ["string", "null"], "pattern": "^\\d+\\.\\d{2}$" },
+    "openedAt": {
+      "type": "string",
+      "description": "ISO 8601 with offset, e.g. 2024-11-02T09:00:00-05:00",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?([+-]\\d{2}:\\d{2}|Z)$"
+    }
+  }
+}
