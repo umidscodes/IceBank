@@ -5,13 +5,16 @@ import { formatMoney } from "@/ui/format";
 import { centsToString, LOAN_APR_PERCENT, monthlyPaymentCents, parseCents, totalInterestCents } from "@/ui/services/loan-math";
 
 export default function LoanCalculatorPage() {
-  const [amount, setAmount] = useState("15000.00");
-  const [term, setTerm] = useState("48");
   const [errors, setErrors] = useState<{ amount?: string; term?: string }>({});
   const [result, setResult] = useState<{ payment: string; interest: string; total: string } | null>(null);
 
-  function calculate(e: React.FormEvent) {
+  function calculate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // Read the fields from the form itself (uncontrolled inputs), so text typed before the page
+    // finished loading still counts.
+    const data = new FormData(e.currentTarget);
+    const amount = String(data.get("amount") ?? "");
+    const term = String(data.get("term") ?? "");
     const fe: { amount?: string; term?: string } = {};
     const cents = parseCents(amount);
     if (cents === null) fe.amount = "Enter an amount like 15000.00.";
@@ -34,14 +37,14 @@ export default function LoanCalculatorPage() {
       <form onSubmit={calculate} noValidate className="grid sm:grid-cols-3 gap-3 items-start" data-testid="calc-form">
         <div>
           <label className="ib-label" htmlFor="calc-amount">Loan amount (CAD)</label>
-          <input id="calc-amount" className="ib-input" inputMode="decimal" data-testid="calc-amount-input" value={amount}
-            aria-invalid={errors.amount ? true : undefined} onChange={(e) => setAmount(e.target.value)} />
+          <input id="calc-amount" className="ib-input" inputMode="decimal" data-testid="calc-amount-input" name="amount" defaultValue="15000.00"
+            aria-invalid={errors.amount ? true : undefined} />
           {errors.amount && <p className="ib-error" role="alert" data-testid="calc-amount-error">{errors.amount}</p>}
         </div>
         <div>
           <label className="ib-label" htmlFor="calc-term">Term (months)</label>
-          <input id="calc-term" className="ib-input" inputMode="numeric" data-testid="calc-term-input" value={term}
-            aria-invalid={errors.term ? true : undefined} onChange={(e) => setTerm(e.target.value)} />
+          <input id="calc-term" className="ib-input" inputMode="numeric" data-testid="calc-term-input" name="term" defaultValue="48"
+            aria-invalid={errors.term ? true : undefined} />
           {errors.term && <p className="ib-error" role="alert" data-testid="calc-term-error">{errors.term}</p>}
         </div>
         <div>

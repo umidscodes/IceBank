@@ -511,8 +511,8 @@ them one by one while debugging, and long QA queries stay maintainable. Think of
 <li><code>lag(balance_after) OVER (PARTITION BY account_id ORDER BY posted_at, id)</code> gives the previous row's balance. That makes a powerful
 integrity check: every posted row's <code>balance_after</code> must equal the previous balance plus a credit or minus a debit.</li>
 </ul>
-<div class="callout"><p><strong>Why this matters for QA.</strong> A planted bug might write a wrong <code>balance_after</code> when two transactions land in the same second.
-The API response for the transfer looks fine; only a query that compares each row with its neighbour catches it.</p></div>`,
+<div class="callout"><p><strong>Why this matters for QA.</strong> A bug in the posting logic could write a wrong <code>balance_after</code>
+while the API response for the transfer still looks fine. Only a query that compares each row with its neighbour catches it.</p></div>`,
       examples: [
         {
           title: "EXISTS: customers who have a PENDING e-Transfer waiting",

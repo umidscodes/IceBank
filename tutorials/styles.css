@@ -90,6 +90,7 @@ a:hover { color: var(--navy); }
 }
 .main { padding: 32px 40px 80px; min-width: 0; }
 .main:focus { outline: none; }
+h1[tabindex="-1"]:focus { outline: none; }
 #view { max-width: 920px; margin: 0 auto; }
 
 /* ---- sidebar ------------------------------------------------------------------------------ */
@@ -202,6 +203,8 @@ kbd { font-family: var(--mono); font-size: 0.82em; background: #fff; border: 1px
 .hero .btn-primary { background: #fff; color: var(--navy); }
 .hero .btn-primary:hover { background: var(--frost); }
 .hero :focus-visible { outline-color: #9FD0F0; }
+.hero .btn-secondary { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.55); }
+.hero .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); color: #fff; border-color: #fff; }
 .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; margin-bottom: 24px; }
 .tile { display: flex; flex-direction: column; gap: 8px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; text-decoration: none; color: var(--ink); box-shadow: var(--shadow); }
@@ -253,6 +256,7 @@ kbd { font-family: var(--mono); font-size: 0.82em; background: #fff; border: 1px
   .topbar-actions { order: 4; margin-left: 0; }
 }
 @media (max-width: 640px) {
+  .topbar { position: static; }
   .topbar-inner { padding: 8px 16px; gap: 10px; }
   .main { padding: 20px 16px 64px; }
   .card { padding: 18px 16px; }

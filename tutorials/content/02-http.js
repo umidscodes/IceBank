@@ -128,7 +128,7 @@ payment APIs do: every money-moving <code>POST</code> requires an <code>Idempote
 </ul>
 <p>Endpoints that require it: <code>POST /transfers</code>, <code>POST /etransfers</code>, <code>POST /etransfers/{id}/cancel</code>, <code>POST /etransfers/{id}/accept</code>,
 <code>POST /bill-payments</code> and <code>POST /deposits/cheque</code>.</p>
-<div class="callout"><p><strong>Test idea.</strong> One of the planted QA bugs ignores the key, so a retry creates a duplicate transfer. Your test: send the same request twice with
+<div class="callout"><p><strong>Test idea.</strong> If the server ever ignored the key, a retry would create a duplicate transfer. Your test: send the same request twice with
 the same key, assert the second response has the same <code>id</code>, and check in the database that only two transaction rows have that <code>referenceId</code>.</p></div>
 <p>Using a method the endpoint does not support (for example <code>DELETE /accounts</code>) returns <code>405 Method Not Allowed</code>.</p>`,
       examples: [
@@ -628,7 +628,7 @@ HTTP/1.1 401 Unauthorized
         "Sign in as Emma with curl (or Postman) step by step, printing each response. Write down how many seconds the OTP and the access token are valid, taken from the responses.",
         "Decode your access token's payload (DevTools console or any offline Base64URL decoder, see Tutorial 3) and check <code>exp − iat</code>. Change one character in the middle of the token and call <code>GET /me</code>. Record the status and <code>code</code>.",
         "Call <code>POST /auth/refresh</code> with your refresh token, then call it again with the <em>same old</em> refresh token. Then try the newest refresh token. Explain what happened to the session and why that design is safer.",
-        "Call <code>POST /auth/logout</code>, then reuse the access token on <code>GET /accounts</code>. Record the result. On QA this is a known bug area; note what the correct behaviour is.",
+        "Call <code>POST /auth/logout</code>, then reuse the access token on <code>GET /accounts</code>. Record the result. Write down what the correct behaviour is and why.",
         "With Noah's account, enter a wrong OTP three times on <code>/auth/mfa/verify</code>. Record the <code>code</code> on each attempt, and what happens if you then send the correct code.",
       ],
     },
@@ -664,7 +664,7 @@ Default order is newest first.</p>
 <div class="callout"><p><strong>Pagination test ideas.</strong> <code>totalPages</code> = ceil(<code>totalElements</code> / <code>size</code>). The last page has
 <code>totalElements − size × (totalPages − 1)</code> items. A page past the end is an empty <code>content</code>, not an error. Walking every page returns every item exactly once,
 with no duplicates and no gaps (compare with a SQL <code>count(*)</code>). <code>size=0</code>, <code>size=101</code>, <code>page=-1</code> and <code>sort=foo,desc</code>
-are 400s with a field error. One planted QA bug makes <code>totalElements</code> off by one.</p></div>
+are 400s with a field error.</p></div>
 
 <h3>Filtering</h3>
 <p>Filters are query parameters too: <code>GET /accounts/1/transactions?from=2026-10-01&amp;to=2026-10-31&amp;type=PURCHASE&amp;minAmount=10.00&amp;maxAmount=50.00&amp;q=coffee</code>.

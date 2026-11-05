@@ -153,13 +153,19 @@
       done += s.done; total += s.total;
       if (s.total && s.done === s.total) lessonsDone++;
     });
-    return { done: done, total: total, lessonsDone: lessonsDone, pct: total ? Math.round((done / total) * 100) : 0 };
+    return { done: done, total: total, lessonsDone: lessonsDone, pct: percent(done, total) };
   }
 
   function overallStats() {
     var done = 0, total = 0;
     tutorials.forEach(function (t) { var s = tutorialStats(t); done += s.done; total += s.total; });
-    return { done: done, total: total, pct: total ? Math.round((done / total) * 100) : 0 };
+    return { done: done, total: total, pct: percent(done, total) };
+  }
+
+  function percent(done, total) {
+    if (!total || !done) return 0;
+    if (done >= total) return 100;
+    return Math.min(99, Math.max(1, Math.floor((done / total) * 100)));
   }
 
   function barHtml(pct, label, extraClass) {

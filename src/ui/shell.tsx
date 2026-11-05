@@ -2,7 +2,7 @@
 /** App shells: top navigation with hover sub-menus, notifications bell, user menu, footer. */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "./components";
 import { logout } from "./api";
 import { SessionProvider, useSession } from "./session";
@@ -153,6 +153,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 }
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
+  // Render page content only once React is running in the browser. Otherwise a fast test could
+  // type into (or submit) the server-rendered form before its handlers are attached, and a native
+  // submit would put the email and password in the URL.
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
   return (
     <ToastProvider>
       <div className="min-h-screen flex flex-col">
@@ -166,7 +171,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1">{children}</main>
+        <main className="flex-1" data-testid="main-content" data-ready={ready}>{ready ? children : null}</main>
         <Footer />
       </div>
     </ToastProvider>
