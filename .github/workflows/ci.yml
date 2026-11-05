@@ -22,6 +22,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - name: Debug test discovery (temporary)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          pwd; node -e "console.log(process.cwd()); console.log(require('fs').readdirSync('tests'))"
+          git ls-files tests | head; git config core.autocrlf || true
+          npx vitest list --filesOnly || true
+          npx vitest list tests/auth.test.ts --filesOnly || true
+          node -e "const g=require('tinyglobby');console.log(g.globSync(['**/*.test.ts'],{cwd:'tests',ignore:['**/node_modules/**']}))" || true
       - name: Smoke tests (start embedded PostgreSQL, migrate, seed, run every business rule)
         run: npm test
       - name: Production build
