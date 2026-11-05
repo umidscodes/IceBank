@@ -32,7 +32,7 @@ export async function seedPerf(db: pg.ClientBase, sb: number, emailSuffix = ""):
       sha256("130692544"), "544", iso(created), iso(created)]]);
   const span = SEED_INSTANT.toMillis() - created.toMillis();
   const rows: unknown[][] = [];
-  let balance = 1000000n;
+  let balance = 0n; // every cent of the balance is backed by a transaction row
   const times: number[] = [];
   for (let i = 0; i < PERF_TRANSACTIONS; i++) times.push(created.toMillis() + Math.floor(rnd.next() * span));
   times.sort((a, b) => a - b);
