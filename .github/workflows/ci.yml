@@ -22,16 +22,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - name: Debug test discovery in PowerShell (temporary)
+      - name: Debug embedded PostgreSQL on Windows (temporary)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: |
-          node -e "console.log('node cwd', process.cwd())"
-          npx vitest list --filesOnly
-          cmd /c "cd"
-          cmd /c "npx vitest list --filesOnly"
-          npm exec -- vitest list --filesOnly
-          npm run test -- --passWithNoTests --run --silent=false --reporter=verbose 2>&1 | Select-Object -First 15
+        run: npx tsx scripts/reset.ts
         continue-on-error: true
       - name: Smoke tests (start embedded PostgreSQL, migrate, seed, run every business rule)
         run: npm test
