@@ -1,0 +1,38 @@
+# Proves a fresh clone installs and runs on Windows (the students' platform) and Linux.
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Smoke tests (start embedded PostgreSQL, migrate, seed, run every business rule)
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Start the app and check it answers
+        shell: bash
+        run: |
+          npm start > app.log 2>&1 &
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:3000/api/v1/test/health; then echo; echo "App is up"; exit 0; fi
+            sleep 2
+          done
+          cat app.log
+          exit 1

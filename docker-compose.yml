@@ -1,0 +1,19 @@
+# Fallback for anyone whose embedded PostgreSQL will not start (rare, mostly antivirus on Windows).
+#   docker compose up -d
+#   set DATABASE_URL=postgres://postgres:postgres@localhost:5433/icebank     (PowerShell: $env:DATABASE_URL="...")
+#   npm run dev
+# With DATABASE_URL set, npm run dev skips the embedded server and uses this one.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: icebank
+      TZ: UTC
+    ports:
+      - "5433:5432"
+    volumes:
+      - icebank-pg:/var/lib/postgresql/data
+volumes:
+  icebank-pg:
