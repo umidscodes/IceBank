@@ -223,6 +223,18 @@ describe("bill payments", () => {
     expect((await call("GET", `/bill-payments/${r.body.id}`, { token: emma })).body.status).toBe("POSTED");
   });
 
+  it("cancels a pay-now payment that is still pending and releases the hold", async () => {
+    const before = await balance(emma, 1);
+    const r = await pay({ amount: "25.00" });
+    expect(r.body.status).toBe("PENDING");
+    const c = await call("DELETE", `/bill-payments/${r.body.id}`, { token: emma });
+    expect(c.status).toBeLessThan(300);
+    expect((await call("GET", `/bill-payments/${r.body.id}`, { token: emma })).body.status).toBe("CANCELLED");
+    expect(await balance(emma, 1)).toMatchObject({ balance: before.balance, availableBalance: before.availableBalance });
+    const { rows } = await sql().query("SELECT status, balance_after FROM transactions WHERE sandbox_id = 1 AND id = (SELECT transaction_id FROM bill_payments WHERE sandbox_id = 1 AND id = $1)", [r.body.id]);
+    expect(rows[0]).toMatchObject({ status: "REVERSED", balance_after: before.balance });
+  });
+
   it("moves weekend and holiday dates to the next business day", async () => {
     expect((await pay({ paymentDate: "2026-11-07" })).body.postingDate).toBe("2026-11-09"); // Saturday -> Monday
     expect((await pay({ paymentDate: "2026-11-11" })).body.postingDate).toBe("2026-11-12"); // Remembrance Day
