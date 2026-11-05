@@ -1,0 +1,48 @@
+{
+  "name": "ice-bank",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ice Bank - a fictional Canadian bank built as a software testing target.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "start": "tsx scripts/dev.ts --prod",
+    "build": "next build",
+    "reset": "tsx scripts/reset.ts",
+    "seed:perf": "tsx scripts/seed-perf.ts",
+    "db:start": "tsx scripts/db-only.ts",
+    "tutorials": "node tutorials/serve.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^9.1.0",
+    "bcryptjs": "^3.0.3",
+    "embedded-postgres": "^16.15.0-beta.19",
+    "jose": "^6.2.15",
+    "luxon": "^3.7.2",
+    "next": "^16.4.5",
+    "pdf-lib": "^1.17.1",
+    "pg": "^8.23.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "swagger-ui-dist": "^5.34.1",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.4",
+    "@types/luxon": "^3.7.6",
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.4",
+    "typescript": "5.9",
+    "vitest": "^5.1.0"
+  }
+}
