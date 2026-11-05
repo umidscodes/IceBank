@@ -273,3 +273,14 @@ kbd { font-family: var(--mono); font-size: 0.82em; background: #fff; border: 1px
   .layout { display: block; }
   .example pre { background: #fff; color: #000; border-top: 1px solid #ccc; white-space: pre-wrap; }
 }
+
+/* ---- quick-check quizzes ---- */
+.quiz-q { border: 1px solid var(--line, #DCE6EF); border-radius: 10px; padding: 0.75rem 1rem; margin: 0 0 0.75rem; }
+.quiz-q legend { font-weight: 600; padding: 0 0.25rem; }
+.quiz-opt { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.3rem 0; cursor: pointer; }
+.quiz-opt input { margin-top: 0.3rem; }
+.quiz-q.right { border-color: #1E7F4F; background: #F2FAF5; }
+.quiz-q.wrong { border-color: #B42318; background: #FEF6F5; }
+.quiz-feedback { margin-top: 0.4rem; font-size: 0.92rem; }
+.quiz-feedback:empty { display: none; }
+.quiz-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }

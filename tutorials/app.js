@@ -67,7 +67,7 @@
   }
 
   function emptyState() {
-    return { version: STATE_VERSION, done: {}, notes: {}, last: null, updatedAt: null };
+    return { version: STATE_VERSION, done: {}, notes: {}, quiz: {}, last: null, updatedAt: null };
   }
 
   /**
@@ -90,6 +90,14 @@
     Object.keys(notes).forEach(function (k) {
       if (LESSON_KEY_RE.test(k) && typeof notes[k] === "string") {
         if (notes[k].length) out.notes[k] = notes[k].slice(0, MAX_NOTE_LENGTH);
+      } else ignored++;
+    });
+    var quiz = obj.quiz == null ? {} : obj.quiz;
+    if (typeof quiz !== "object" || Array.isArray(quiz)) throw new Error("\"quiz\" must be an object of quiz scores.");
+    Object.keys(quiz).forEach(function (k) {
+      var q = quiz[k];
+      if (LESSON_KEY_RE.test(k) && q && Number.isInteger(q.score) && Number.isInteger(q.total) && q.total > 0 && q.score >= 0 && q.score <= q.total) {
+        out.quiz[k] = { score: q.score, total: q.total };
       } else ignored++;
     });
     if (typeof obj.last === "string" && LESSON_KEY_RE.test(obj.last)) out.last = obj.last;
@@ -307,6 +315,14 @@
       return '<li class="exercise' + (checked ? " checked" : "") + '"><input type="checkbox" id="' + id + '" data-key="' + esc(k) + '"' + (checked ? " checked" : "") +
         '><label for="' + id + '"><span class="ex-num">Exercise ' + (i + 1) + ".</span> " + text + "</label></li>";
     }).join("");
+    var quizHtml = (l.quiz || []).map(function (q, qi) {
+      var name = "quiz-" + t.id + "-" + l.id + "-" + qi;
+      return '<fieldset class="quiz-q" data-q="' + qi + '"><legend><span class="ex-num">Q' + (qi + 1) + ".</span> " + q.q + "</legend>" +
+        q.options.map(function (opt, oi) {
+          return '<label class="quiz-opt"><input type="radio" name="' + name + '" value="' + oi + '"> <span>' + opt + "</span></label>";
+        }).join("") + '<div class="quiz-feedback" aria-live="polite"></div></fieldset>';
+    }).join("");
+    var best = state.quiz[key];
     var links = (l.links || []).map(function (lk) {
       return '<a class="btn btn-secondary btn-small" href="' + esc(lk.href) + '" target="_blank" rel="noopener">' + esc(lk.label) + '<span class="sr-only"> (opens in a new tab)</span></a>';
     }).join(" ");
@@ -325,6 +341,9 @@
       (links ? "<span>" + links + "</span>" : "") + "</div></header>" +
       '<section class="card" aria-labelledby="h-explain"><h2 id="h-explain">Explanation</h2><div class="prose">' + l.body + "</div></section>" +
       (examples ? '<section class="card" aria-labelledby="h-examples"><h2 id="h-examples">Ice Bank examples</h2>' + examples + "</section>" : "") +
+      (quizHtml ? '<section class="card quiz" aria-labelledby="h-quiz"><h2 id="h-quiz">Quick check</h2><p class="hint">Answer, then press Check. These are for you; they do not count toward exercise progress.' +
+        (best ? ' <span class="pill" id="quiz-best">Best: ' + best.score + "/" + best.total + "</span>" : ' <span class="pill" id="quiz-best" hidden></span>') + "</p>" + quizHtml +
+        '<div class="quiz-actions"><button type="button" class="btn btn-primary" id="quiz-check">Check answers</button> <button type="button" class="btn btn-secondary" id="quiz-reset">Try again</button> <span id="quiz-score" aria-live="polite"></span></div></section>' : "") +
       '<section class="card" aria-labelledby="h-exercises"><h2 id="h-exercises">Exercises</h2><p class="hint">Run these against Ice Bank (local or QA) and tick each one when you have really done it. No answers here: bring your results to the next session.</p>' +
       '<ul class="exercises">' + exercises + "</ul></section>" +
       '<section class="card notes" aria-labelledby="h-notes"><h2 id="h-notes"><label for="notes-' + t.id + "-" + l.id + '">My notes</label></h2>' +
@@ -345,6 +364,7 @@
     var codes = view.querySelectorAll(".example pre code");
     (l.examples || []).forEach(function (ex, i) { if (codes[i]) codes[i].textContent = ex.code.replace(/^\n+|\s+$/g, ""); });
 
+    wireQuiz(t, l);
     var ta = view.querySelector(".notes textarea");
     var status = document.getElementById("notes-status");
     var key = lessonKey(t, l);
@@ -356,6 +376,41 @@
       noteTimer = setTimeout(function () { saveNote(key, ta.value, status); }, 400);
     });
     ta.addEventListener("blur", function () { clearTimeout(noteTimer); saveNote(key, ta.value, status); });
+  }
+
+  function wireQuiz(t, l) {
+    if (!l.quiz || !l.quiz.length) return;
+    var check = document.getElementById("quiz-check"), again = document.getElementById("quiz-reset");
+    var scoreEl = document.getElementById("quiz-score");
+    check.addEventListener("click", function () {
+      var score = 0;
+      l.quiz.forEach(function (q, qi) {
+        var fs = document.querySelector('.quiz-q[data-q="' + qi + '"]');
+        var picked = fs.querySelector("input:checked");
+        var fb = fs.querySelector(".quiz-feedback");
+        var right = picked && Number(picked.value) === q.answer;
+        if (right) score++;
+        fs.classList.toggle("right", !!right);
+        fs.classList.toggle("wrong", !right);
+        fb.innerHTML = (picked ? (right ? "<strong>Correct.</strong> " : "<strong>Not quite.</strong> ") : "<strong>No answer picked.</strong> ") + (q.explain || "");
+      });
+      scoreEl.textContent = "You scored " + score + " of " + l.quiz.length + ".";
+      var key = lessonKey(t, l), prev = state.quiz[key];
+      if (!prev || score > prev.score || prev.total !== l.quiz.length) {
+        state.quiz[key] = { score: score, total: l.quiz.length };
+        persist();
+        var bestEl = document.getElementById("quiz-best");
+        if (bestEl) { bestEl.hidden = false; bestEl.textContent = "Best: " + score + "/" + l.quiz.length; }
+      }
+    });
+    again.addEventListener("click", function () {
+      document.querySelectorAll(".quiz-q").forEach(function (fs) {
+        fs.classList.remove("right", "wrong");
+        fs.querySelector(".quiz-feedback").innerHTML = "";
+        fs.querySelectorAll("input").forEach(function (i) { i.checked = false; });
+      });
+      scoreEl.textContent = "";
+    });
   }
 
   function saveNote(key, value, status) {
@@ -473,7 +528,7 @@
 
   // ---- export / import / reset ----------------------------------------------------------------
 
-  function hasProgress() { return Object.keys(state.done).length > 0 || Object.keys(state.notes).length > 0; }
+  function hasProgress() { return Object.keys(state.done).length > 0 || Object.keys(state.notes).length > 0 || Object.keys(state.quiz).length > 0; }
 
   function exportProgress() {
     flushNotes();
@@ -481,7 +536,7 @@
     var data = {
       app: EXPORT_APP, version: STATE_VERSION, exportedAt: new Date().toISOString(),
       summary: { exercisesDone: o.done, exercisesTotal: o.total, percent: o.pct },
-      done: state.done, notes: state.notes, last: state.last, updatedAt: state.updatedAt,
+      done: state.done, notes: state.notes, quiz: state.quiz, last: state.last, updatedAt: state.updatedAt,
     };
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     var url = URL.createObjectURL(blob);
