@@ -209,6 +209,9 @@ describe("bill payments", () => {
     const ok = await call("POST", "/payees", { token: emma, body: { billerId: 2, accountNumber: "IT99999999" } });
     expect(ok.status).toBe(201);
     expect(ok.headers.get("location")).toBe(`/api/v1/payees/${ok.body.id}`);
+    const fetched = await call("GET", `/payees/${ok.body.id}`, { token: emma });
+    expect(fetched.body).toMatchObject({ id: ok.body.id, accountNumber: "IT99999999" });
+    expect((await call("GET", "/payees/999999", { token: emma })).status).toBe(404);
   });
 
   it("pay now posts on the next business day (Monday -> Tuesday)", async () => {

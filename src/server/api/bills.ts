@@ -67,6 +67,8 @@ doc({ method: "post", path: "/payees", tag: "Bill payments", summary: "Add a pay
   description: "The account number must match the biller's format (see accountNumberPattern). The same biller + account number can be saved once (409 PAYEE_EXISTS).",
   responses: { 201: { schema: PayeeSchema, description: "Added", headers: { Location: "/api/v1/payees/{id}" } } },
   errors: { 400: "One or more fields are invalid.", 409: "You already have this payee." } });
+doc({ method: "get", path: "/payees/{id}", tag: "Bill payments", summary: "Get one payee", auth: "bearer", params: IdParam,
+  responses: { 200: { schema: PayeeSchema, description: "Payee" } }, errors: { 404: "Payee not found." } });
 doc({ method: "put", path: "/payees/{id}", tag: "Bill payments", summary: "Update a payee's nickname or account number", auth: "bearer",
   params: IdParam, body: PayeeUpdate, responses: { 200: { schema: PayeeSchema, description: "Updated" } }, errors: { 404: "Payee not found." } });
 doc({ method: "delete", path: "/payees/{id}", tag: "Bill payments", summary: "Delete a payee", auth: "bearer", params: IdParam,
@@ -168,6 +170,13 @@ export const updatePayee = route({ auth: "customer", body: PayeeUpdate }, async 
       [sb, id, cid, ctx.body.accountNumber ?? null, ctx.body.nickname !== undefined, ctx.body.nickname || null]);
     return ok(payeeView((await one(db, `${PAYEE_SELECT} WHERE p.sandbox_id = $1 AND p.id = $2`, [sb, id]))!));
   });
+});
+
+export const getPayee = route({ auth: "customer" }, async (ctx) => {
+  const rows = await query(`${PAYEE_SELECT} WHERE p.sandbox_id = $1 AND p.id = $2 AND p.customer_id = $3 AND p.deleted_at IS NULL`,
+    [ctx.user!.sandboxId, intParam(ctx.params.id), customerId(ctx.user)]);
+  if (!rows[0]) throw notFound("Payee");
+  return ok(payeeView(rows[0]));
 });
 
 export const deletePayee = route({ auth: "customer" }, async (ctx) => {

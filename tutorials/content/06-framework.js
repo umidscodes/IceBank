@@ -393,7 +393,7 @@ public static String newCustomer() {
             "firstName", "Test", "lastName", "Customer", "dateOfBirth", "1995-05-05",
             "email", email, "phone", "(416) 555-0199",
             "addressLine1", "200 Bay Street", "city", "Toronto", "province", "ON", "postalCode", "M5J 2T3",
-            "sin", "046 454 286", "password", "Glacier#2026"))
+            "sin", "193 746 286", "password", "Glacier#2026"))
     .when().post("/auth/register")
     .then().statusCode(201);
     return email;   // new customer with an empty chequing account and a debit card

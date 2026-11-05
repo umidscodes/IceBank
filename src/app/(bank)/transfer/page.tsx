@@ -37,7 +37,10 @@ export default function TransferPage() {
     if (Object.keys(fe).length === 0) setPhase("review");
   }
 
+  const submitting = useRef(false);
   async function confirm() {
+    if (submitting.current) return; // a double click must not send the request twice
+    submitting.current = true;
     setPhase("processing");
     try {
       const [r] = await Promise.all([
@@ -45,12 +48,18 @@ export default function TransferPage() {
         processingDelay(),
       ]);
       setResult(r);
+      submitting.current = false;
       setPhase("done");
       toast.success(`Transfer of ${formatMoney(r.amount)} completed.`);
       reload();
     } catch (err) {
+      submitting.current = false;
       setPhase("form");
       key.current = newIdempotencyKey();
+      if (!(err instanceof ApiProblem)) {
+        setError("We could not reach Ice Bank. Check your connection, then try again. Your transfer was not sent.");
+        toast.error("Network error: the transfer was not sent.");
+      }
       if (err instanceof ApiProblem) {
         setErrors(err.fieldErrors());
         setError(err.message === "One or more fields are invalid." ? "Please fix the highlighted fields." : err.message);
