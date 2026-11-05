@@ -4,9 +4,12 @@ import path from "node:path";
 const port = process.env.DB_PORT ?? "5433";
 
 export default defineConfig({
+  root: __dirname,
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
   test: {
-    include: ["tests/**/*.test.ts"],
+    // An explicit test directory: plain "tests/**" globs found no files on Windows runners.
+    dir: path.resolve(__dirname, "tests"),
+    include: ["**/*.test.ts"],
     globalSetup: ["tests/global-setup.ts"],
     testTimeout: 60000,
     hookTimeout: 120000,
