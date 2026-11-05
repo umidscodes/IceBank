@@ -8,7 +8,7 @@ import net from "node:net";
 import path from "node:path";
 import os from "node:os";
 import pg from "pg";
-import { execFile } from "node:child_process";
+import { spawn } from "node:child_process";
 
 export const ROOT = path.resolve(__dirname, "..", "..");
 export const DATA_DIR = path.join(ROOT, ".icebank", "pgdata");
@@ -137,13 +137,18 @@ function windowsBin(name: string): string {
   return path.join(ROOT, "node_modules", "@embedded-postgres", "windows-x64", "native", "bin", `${name}.exe`);
 }
 
+/**
+ * Run a pg_ctl command and wait for pg_ctl itself to exit. stdio is not piped: on Windows the
+ * postgres server inherits pg_ctl's handles, so waiting for the pipes to close would wait until
+ * the database stops (forever). Server output goes to the log file instead.
+ */
 function run(file: string, args: string[], log: (m: unknown) => void): Promise<void> {
   return new Promise((resolve, reject) => {
-    execFile(file, args, { windowsHide: true }, (err, stdout, stderr) => {
-      if (stdout) log(stdout);
-      if (stderr) log(stderr);
-      if (err) reject(new Error(`${path.basename(file)} exited with code ${(err as NodeJS.ErrnoException).code ?? "?"}`));
-      else resolve();
+    const child = spawn(file, args, { windowsHide: true, stdio: "ignore", detached: false });
+    child.once("error", (err) => reject(err));
+    child.once("exit", (code) => {
+      if (code === 0) resolve();
+      else { log(`${path.basename(file)} exited with code ${code}`); reject(new Error(`${path.basename(file)} exited with code ${code}`)); }
     });
   });
 }

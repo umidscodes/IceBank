@@ -24,6 +24,7 @@ jobs:
       - run: npm run typecheck
       - name: Smoke tests (start embedded PostgreSQL, migrate, seed, run every business rule)
         run: npm test
+        timeout-minutes: 15
       - name: Production build
         run: npm run build
       - name: Start the app and check it answers
