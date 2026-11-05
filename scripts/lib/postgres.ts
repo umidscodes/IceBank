@@ -8,6 +8,7 @@ import net from "node:net";
 import path from "node:path";
 import os from "node:os";
 import pg from "pg";
+import { execFile } from "node:child_process";
 
 export const ROOT = path.resolve(__dirname, "..", "..");
 export const DATA_DIR = path.join(ROOT, ".icebank", "pgdata");
@@ -97,10 +98,19 @@ export async function startPostgres(opts: { quiet?: boolean } = {}): Promise<Run
   const pidFile = path.join(DATA_DIR, "postmaster.pid");
   if (fs.existsSync(pidFile)) fs.rmSync(pidFile, { force: true });
 
-  try {
-    await server.start();
-  } catch (err) {
-    throw explain("start", err);
+  let stopServer: () => Promise<void>;
+  if (process.platform === "win32") {
+    // On Windows postgres.exe refuses to run with administrator rights (elevated terminals, CI).
+    // pg_ctl starts it with a restricted token, so it works for every kind of user.
+    await pgCtlStart(remember).catch((err) => { throw explain("start", err); });
+    stopServer = () => pgCtlStop();
+  } else {
+    try {
+      await server.start();
+    } catch (err) {
+      throw explain("start", err);
+    }
+    stopServer = () => server.stop();
   }
   if (!opts.quiet) console.log(`[db] PostgreSQL 16 running on localhost:${DB_PORT} (${os.platform()})`);
 
@@ -116,7 +126,40 @@ export async function startPostgres(opts: { quiet?: boolean } = {}): Promise<Run
     stop: async () => {
       if (stopped) return;
       stopped = true;
-      try { await server.stop(); } catch { /* already stopped */ }
+      try { await stopServer(); } catch { /* already stopped */ }
     },
   };
+}
+
+// ---- Windows: start and stop through pg_ctl ----------------------------------------------------
+
+function windowsBin(name: string): string {
+  return path.join(ROOT, "node_modules", "@embedded-postgres", "windows-x64", "native", "bin", `${name}.exe`);
+}
+
+function run(file: string, args: string[], log: (m: unknown) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    execFile(file, args, { windowsHide: true }, (err, stdout, stderr) => {
+      if (stdout) log(stdout);
+      if (stderr) log(stderr);
+      if (err) reject(new Error(`${path.basename(file)} exited with code ${(err as NodeJS.ErrnoException).code ?? "?"}`));
+      else resolve();
+    });
+  });
+}
+
+const LOG_FILE = path.join(ROOT, ".icebank", "postgres.log");
+
+async function pgCtlStart(log: (m: unknown) => void) {
+  try {
+    await run(windowsBin("pg_ctl"), ["start", "-D", DATA_DIR, "-w", "-t", "60", "-l", LOG_FILE,
+      "-o", `-p ${DB_PORT} -c timezone=UTC -c max_connections=60`], log);
+  } catch (err) {
+    if (fs.existsSync(LOG_FILE)) log(fs.readFileSync(LOG_FILE, "utf8").split(/\r?\n/).slice(-15).join("\n"));
+    throw err;
+  }
+}
+
+async function pgCtlStop() {
+  await run(windowsBin("pg_ctl"), ["stop", "-D", DATA_DIR, "-m", "fast", "-w"], () => {});
 }
