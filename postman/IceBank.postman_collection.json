@@ -1,0 +1,2294 @@
+{
+  "info": {
+    "_postman_id": "cf9b3a7f-e6a2-58d0-939a-510bed056f21",
+    "name": "Ice Bank API",
+    "description": "Requests for every area of the Ice Bank API (local build).\n\n**Start here:** select the **Ice Bank - local** environment, then send the three requests in **1. Sign in** in order.\nThey save `accessToken`, and every other request uses it automatically (collection Authorization = Bearer `{{accessToken}}`).\n\n- Access tokens last 15 minutes: send **Refresh tokens** (or sign in again).\n- **Admin (teller)** has its own sign-in requests and uses `{{adminToken}}`.\n- **0. Test support → Reset** restores the seed data (and ends every session, so sign in again afterwards).\n- Money-moving POSTs send `Idempotency-Key: {{$guid}}`, a new value each time. Set a fixed value to try a replay.\n\nRun the whole collection with the Collection Runner (or `npx newman run`) for a quick smoke test.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "id": "fe37209a-951a-9eed-be91-e9e8cb93d884",
+      "name": "0. Test support",
+      "description": "Health, reset and the sandbox clock. These use the `X-Sandbox-Key` header, not a token.",
+      "item": [
+        {
+          "id": "07ff6845-5914-3683-483f-10c9b6ae4911",
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/test/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test",
+                "health"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ad673137-6dbd-fdc6-8984-fd6c4519f602",
+          "name": "Reset sandbox to seed data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Sandbox-Key",
+                "value": "{{sandboxKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/test/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test",
+                "reset"
+              ]
+            },
+            "description": "Deletes everything in your sandbox and re-seeds it: same ids, same balances, clock back to 2026-11-02 09:00 Toronto.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "c9c585c0-cdcb-4c23-9274-3ddcd3e8cc95",
+          "name": "Read the clock",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Sandbox-Key",
+                "value": "{{sandboxKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/test/clock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test",
+                "clock"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d9eddbe6-0182-4a4d-28e5-cf54597346fa",
+      "name": "1. Sign in",
+      "description": "Send these three in order. Change `email` in the environment to sign in as another persona (password is always IceBank#2026).",
+      "item": [
+        {
+          "id": "b9a7fc24-b690-44bc-3e87-cbb6e791061d",
+          "name": "1. Log in (email + password)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Step 1 of 3. Checks the password and sends a 6-digit code to Ice Mail. Saves `mfaToken`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.environment.set(\"mfaToken\", pm.response.json().mfaToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "fb06c614-1113-651d-8491-d6b286a9708e",
+          "name": "2. Read the code from Ice Mail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Sandbox-Key",
+                "value": "{{sandboxKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inbox?email={{email}}&kind=OTP&size=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inbox"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{email}}"
+                },
+                {
+                  "key": "kind",
+                  "value": "OTP"
+                },
+                {
+                  "key": "size",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Step 2 of 3. Reads the newest one-time code with the sandbox key, the way an automated test does. Saves `otpCode`.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "const m = pm.response.json().content[0];",
+                  "pm.test(\"an OTP message exists\", () => pm.expect(m && m.otpCode).to.match(/^\\d{6}$/));",
+                  "pm.environment.set(\"otpCode\", m.otpCode);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "b958cb7a-03af-471c-69d0-8997903d4b4f",
+          "name": "3. Verify the code (get tokens)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "mfa",
+                "verify"
+              ]
+            },
+            "description": "Step 3 of 3. Returns a 15-minute access token and a 7-day refresh token. Saves them as `accessToken` and `refreshToken`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mfaToken\": \"{{mfaToken}}\",\n  \"code\": \"{{otpCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "const t = pm.response.json();",
+                  "pm.environment.set(\"accessToken\", t.accessToken);",
+                  "pm.environment.set(\"refreshToken\", t.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "e952bb44-8472-cec6-5e8b-7401b44f1fe8",
+          "name": "Refresh tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Swaps the refresh token for new tokens. The old refresh token stops working (rotation).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "const t = pm.response.json();",
+                  "pm.environment.set(\"accessToken\", t.accessToken);",
+                  "pm.environment.set(\"refreshToken\", t.refreshToken);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c0fd7085-f676-bdfe-4415-d464f24768cd",
+      "name": "2. Profile",
+      "description": "",
+      "item": [
+        {
+          "id": "0fc20cdc-ba59-031f-b90a-e5fd8f9e9ece",
+          "name": "Get my profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "93b35586-6033-dbca-83a5-bf537ac50530",
+          "name": "Update phone",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"(416) 555-0142\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a6e664a4-7dfe-075d-5d3f-ca1419762f47",
+      "name": "3. Accounts and transactions",
+      "description": "",
+      "item": [
+        {
+          "id": "07227587-2ec6-41db-4320-e1f59f9fc355",
+          "name": "List my accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test(\"Emma has 4 accounts after a reset\", () => pm.expect(pm.response.json().length).to.be.at.least(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "c851a167-ed8c-5d06-61fa-d6a0b3ffb84e",
+          "name": "Get one account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "a3db4409-40bd-466a-f6a4-67c416fa0cf6",
+          "name": "Another customer's account (expect 404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "7"
+              ]
+            },
+            "description": "Account 7 belongs to Olivia. Ice Bank answers 404, not 403, so ids cannot be probed."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 404\", () => pm.expect(pm.response.code).to.be.oneOf([404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "7e15845f-a9c9-471f-81b9-ab34ffdfc898",
+          "name": "Search transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/transactions?from=2026-10-01&to=2026-10-31&type=PURCHASE&page=0&size=20&sort=amount,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-10-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-10-31"
+                },
+                {
+                  "key": "type",
+                  "value": "PURCHASE"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "amount,desc"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "db631ba7-385c-4e0e-5ba2-1733120e1857",
+          "name": "Export transactions as CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/transactions.csv?from=2026-10-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "transactions.csv"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-10-01"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "a5a95b8f-fcec-eba4-f416-89c503a3491a",
+          "name": "List statements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/statements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "statements"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "24f1aa68-e2fa-9f61-e55d-86037be0abf5",
+          "name": "Download October statement (PDF)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/statements/2026-10.pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "statements",
+                "2026-10.pdf"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "8c72c4f3-ac80-d308-2e09-59a8787280e2",
+          "name": "Open a savings account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"SAVINGS\",\n  \"nickname\": \"Vacation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.expect(pm.response.code).to.be.oneOf([201]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "748d23f5-f903-6cd1-7094-a568166ca33e",
+      "name": "4. Transfers",
+      "description": "",
+      "item": [
+        {
+          "id": "8238210e-f131-6341-5788-03e6b2880497",
+          "name": "Transfer chequing to savings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required on money-moving POSTs. A fresh value on every send."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transfers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transfers"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": {{accountId}},\n  \"toAccountId\": {{savingsAccountId}},\n  \"amount\": \"25.00\",\n  \"memo\": \"Postman test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.expect(pm.response.code).to.be.oneOf([201]));",
+                  "pm.environment.set(\"transferId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "45371090-7226-6b95-a651-404d23b6dddf",
+          "name": "Transfer with 3 decimals (expect 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required on money-moving POSTs. A fresh value on every send."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transfers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transfers"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": {{accountId}},\n  \"toAccountId\": {{savingsAccountId}},\n  \"amount\": \"10.005\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.expect(pm.response.code).to.be.oneOf([400]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ff27433d-7e33-e774-6a9e-7bb85cee51bf",
+          "name": "Get the transfer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transfers/{{transferId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transfers",
+                "{{transferId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "fb9baf47-b643-ba1e-63ed-ebaa8f687b2a",
+          "name": "List my transfers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transfers?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transfers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "71ec12c4-f0b6-bb75-639a-9882229ef120",
+      "name": "5. Interac e-Transfer",
+      "description": "",
+      "item": [
+        {
+          "id": "16e5e5e1-10ca-a0c3-8aaa-144a776ee68a",
+          "name": "Send an e-Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required on money-moving POSTs. A fresh value on every send."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/etransfers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "etransfers"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": {{accountId}},\n  \"recipientName\": \"Liam Chen\",\n  \"recipientEmail\": \"liam.chen@icebank.test\",\n  \"amount\": \"20.00\",\n  \"message\": \"Lunch\",\n  \"securityQuestion\": \"Where did we meet?\",\n  \"securityAnswer\": \"Ottawa\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.expect(pm.response.code).to.be.oneOf([201]));",
+                  "pm.environment.set(\"etransferId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "68538153-1f68-0013-8281-95df053acf8c",
+          "name": "Cancel it (full refund)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required on money-moving POSTs. A fresh value on every send."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/etransfers/{{etransferId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "etransfers",
+                "{{etransferId}}",
+                "cancel"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ce93374f-c152-a594-7f79-05dfedfdce28",
+          "name": "Sent e-Transfers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/etransfers?direction=sent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "etransfers"
+              ],
+              "query": [
+                {
+                  "key": "direction",
+                  "value": "sent"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cf775fe9-0f55-5269-c4f5-d5fd683a8dc0",
+          "name": "Received e-Transfers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/etransfers?direction=received",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "etransfers"
+              ],
+              "query": [
+                {
+                  "key": "direction",
+                  "value": "received"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "e40b24fd-c25e-9766-a475-53e6a63ae2ff",
+          "name": "List contacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/etransfer-contacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "etransfer-contacts"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "e9b14824-8ff7-c16b-b4fc-f5fd5c216452",
+          "name": "Autodeposit setting",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/etransfers/autodeposit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "etransfers",
+                "autodeposit"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d72cd801-40d7-f389-f8c0-fb91d3a998bc",
+      "name": "6. Bill payments",
+      "description": "",
+      "item": [
+        {
+          "id": "bb8ce338-fbe6-6b5e-e6c9-cf7bf45e4b89",
+          "name": "Search billers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/billers?q=power",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billers"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "power"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "6c19f567-1b07-0d98-7631-7e27f66b9f20",
+          "name": "List payees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payees"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "6d325c5f-6c65-ec93-c73d-3f2e7443668c",
+          "name": "Schedule a bill payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required on money-moving POSTs. A fresh value on every send."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bill-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bill-payments"
+              ]
+            },
+            "description": "2026-11-07 is a Saturday, so postingDate comes back as Monday 2026-11-09.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payeeId\": 1,\n  \"fromAccountId\": {{accountId}},\n  \"amount\": \"45.00\",\n  \"paymentDate\": \"2026-11-07\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.expect(pm.response.code).to.be.oneOf([201]));",
+                  "pm.environment.set(\"billPaymentId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "1d8d0b3d-b15c-5270-d235-8a143f0a759d",
+          "name": "Cancel that payment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bill-payments/{{billPaymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bill-payments",
+                "{{billPaymentId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204\", () => pm.expect(pm.response.code).to.be.oneOf([204]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "2ff9439f-1896-8f93-2dbe-bfbddaa10285",
+          "name": "List bill payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bill-payments?status=SCHEDULED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bill-payments"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "SCHEDULED"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "316f275f-449b-18fb-8dc3-cdbf4f381163",
+      "name": "7. Cheque deposit",
+      "description": "",
+      "item": [
+        {
+          "id": "9e00d85e-f379-638e-88df-0c30f33a2baa",
+          "name": "Deposit a cheque (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required on money-moving POSTs. A fresh value on every send."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/deposits/cheque",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "deposits",
+                "cheque"
+              ]
+            },
+            "description": "If Postman shows the files as missing, click each file field and pick `sample-cheque-front.png` / `sample-cheque-back.png` from the repo's postman folder.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "amount",
+                  "value": "250.00",
+                  "type": "text"
+                },
+                {
+                  "key": "frontImage",
+                  "type": "file",
+                  "src": "sample-cheque-front.png"
+                },
+                {
+                  "key": "backImage",
+                  "type": "file",
+                  "src": "sample-cheque-back.png"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.expect(pm.response.code).to.be.oneOf([201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "b01286e7-b892-bd6e-6622-3a5bb6ee362d",
+          "name": "List my deposits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/deposits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "deposits"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "be992d65-2bca-fb2b-8401-b74af4c447a3",
+      "name": "8. Cards, loans, disputes, notifications",
+      "description": "",
+      "item": [
+        {
+          "id": "0f21f696-a54a-a7da-e9be-d6c7427722e3",
+          "name": "List cards",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "4b06786b-daba-3807-e788-55ed316bed78",
+          "name": "Lock debit card",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cards/{{cardId}}/lock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards",
+                "{{cardId}}",
+                "lock"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 409\", () => pm.expect(pm.response.code).to.be.oneOf([200, 409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "077d51ee-880f-aec4-5674-b25348e80a20",
+          "name": "Unlock debit card",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cards/{{cardId}}/unlock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards",
+                "{{cardId}}",
+                "unlock"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 or 409\", () => pm.expect(pm.response.code).to.be.oneOf([200, 409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "28e9f620-2a0f-2b28-c926-99f5fe9d39fb",
+          "name": "Set daily POS limit",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cards/{{cardId}}/limits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards",
+                "{{cardId}}",
+                "limits"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dailyPosLimit\": \"2500.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "e129d560-39e8-76aa-9348-78626a618e75",
+          "name": "Apply for a loan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/loans/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "loans",
+                "applications"
+              ]
+            },
+            "description": "DTI = (1000 + 317.95) / 5000 = 26.36% -> APPROVED.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"10000.00\",\n  \"termMonths\": 36,\n  \"purpose\": \"Car purchase\",\n  \"annualIncome\": \"60000.00\",\n  \"monthlyDebtPayments\": \"1000.00\",\n  \"disbursementAccountId\": {{accountId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.expect(pm.response.code).to.be.oneOf([201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "b153b94f-5c8a-2292-e1a7-51af954fb6df",
+          "name": "My loans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "loans"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "const l = pm.response.json(); if (l.length) pm.environment.set(\"loanId\", l[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "32544f56-eab1-7cd5-55fe-4a6fdd732c4d",
+          "name": "Loan schedule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/loans/{{loanId}}/schedule",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "loans",
+                "{{loanId}}",
+                "schedule"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "66c03632-167c-06fa-d9ef-0d51dbcc942d",
+          "name": "My disputes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/disputes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "disputes"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "8ca41f1e-61fa-c0ca-bda9-27cc05ee7128",
+          "name": "Unread notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications?unread=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "unread",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4e59f67b-7e96-69ad-586e-8264f6e0b775",
+      "name": "9. Ice Mail",
+      "description": "",
+      "item": [
+        {
+          "id": "b09143d0-ad2b-8bdb-53c4-3d2ecf378065",
+          "name": "My inbox (signed in)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inbox?size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inbox"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "4fe7e5d1-28c7-9416-212a-61de7cae2c6b",
+          "name": "Any inbox with the sandbox key",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Sandbox-Key",
+                "value": "{{sandboxKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inbox?email=liam.chen@icebank.test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inbox"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "liam.chen@icebank.test"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4221da04-edf4-8640-be8e-00a70a5ba67a",
+      "name": "10. Admin (teller)",
+      "description": "Sign in as the teller first; these requests use `{{adminToken}}`.",
+      "item": [
+        {
+          "id": "9e1e0a32-4431-f5e5-70f2-13c98d315c2a",
+          "name": "Teller 1. Log in (email + password)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Step 1 of 3. Checks the password and sends a 6-digit code to Ice Mail. Saves `mfaToken`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.environment.set(\"mfaToken\", pm.response.json().mfaToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "2bfd4b81-d65b-3d8a-eb24-05ffb904a0e4",
+          "name": "Teller 2. Read the code from Ice Mail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Sandbox-Key",
+                "value": "{{sandboxKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inbox?email={{adminEmail}}&kind=OTP&size=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inbox"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{adminEmail}}"
+                },
+                {
+                  "key": "kind",
+                  "value": "OTP"
+                },
+                {
+                  "key": "size",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Step 2 of 3. Reads the newest one-time code with the sandbox key, the way an automated test does. Saves `otpCode`.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "const m = pm.response.json().content[0];",
+                  "pm.test(\"an OTP message exists\", () => pm.expect(m && m.otpCode).to.match(/^\\d{6}$/));",
+                  "pm.environment.set(\"otpCode\", m.otpCode);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "f92237bd-8a0e-7c78-9685-769c8197fd8a",
+          "name": "Teller 3. Verify the code (get tokens)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "mfa",
+                "verify"
+              ]
+            },
+            "description": "Step 3 of 3. Returns a 15-minute access token and a 7-day refresh token. Saves them as `adminToken` and `adminRefreshToken`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mfaToken\": \"{{mfaToken}}\",\n  \"code\": \"{{otpCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "const t = pm.response.json();",
+                  "pm.environment.set(\"adminToken\", t.accessToken);",
+                  "pm.environment.set(\"adminRefreshToken\", t.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "74577973-f2ff-86b2-bbca-5557f3511917",
+          "name": "Search customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/customers?q=tremblay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "customers"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "tremblay"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "9fb5f687-ecc9-50a5-a200-3dbf9d907896",
+          "name": "Customer detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/customers/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "customers",
+                "1"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "fe4eb3d4-7e28-719d-c02c-9c339946d4eb",
+          "name": "Pending cheque deposits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/deposits?status=PENDING",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "deposits"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "2e2c8502-4f11-9ce2-60c6-ef7be5653298",
+          "name": "Loans in manual review",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/loans?status=MANUAL_REVIEW",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "loans"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "MANUAL_REVIEW"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "263519fa-cd42-bbc0-0fe0-cabb77181049",
+          "name": "Audit log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/audit-log?size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "audit-log"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "75d8425c-65b9-5723-a45f-bdf6d1fa9ae3",
+          "name": "Customer token on admin endpoint (expect 403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "customers"
+              ]
+            },
+            "description": "Uses the customer's token on purpose.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", () => pm.expect(pm.response.code).to.be.oneOf([403]));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "id": "6d6c7fdc-8a4f-e749-b462-363c189ff23d",
+      "name": "11. Clock (run last)",
+      "description": "Moving the clock posts scheduled payments, pays interest and expires e-Transfers. Use Reset to go back.",
+      "item": [
+        {
+          "id": "bcb2fae6-2ba0-56b5-4c37-11a4ecaf899b",
+          "name": "Advance the clock 30 days",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Sandbox-Key",
+                "value": "{{sandboxKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/test/clock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "test",
+                "clock"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"advanceDays\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -111,6 +111,22 @@ The app uses the sandbox clock for everything business-related: lockouts, OTP an
 3. `POST /auth/mfa/verify` with `{mfaToken, code}` returns `accessToken` (15 min) and `refreshToken` (7 days).
 4. Send `Authorization: Bearer <accessToken>` on later calls.
 
+### Postman
+
+The `postman/` folder has a ready-made collection with 55 requests, covering every area of the API.
+
+1. In Postman, click **Import** and select both `postman/IceBank.postman_collection.json` and `postman/IceBank-local.postman_environment.json`.
+2. Choose the **Ice Bank - local** environment (top right).
+3. Open **1. Sign in** and send the three requests in order. They save `accessToken`, and every other request then uses it automatically.
+
+Notes:
+- **Another persona:** change `email` in the environment. The password stays `IceBank#2026`.
+- **Admin requests:** they have their own sign-in at the top of **10. Admin (teller)**.
+- **Expired token:** access tokens last 15 minutes. Send **Refresh tokens**, or sign in again.
+- **Cheque deposit:** it uploads `postman/sample-cheque-front.png` and `-back.png`. If Postman says a file is missing, click each file field and pick the images from the `postman` folder.
+- **Whole-collection run:** use the Collection Runner, or `npx newman run postman/IceBank.postman_collection.json -e postman/IceBank-local.postman_environment.json --working-dir postman`. It starts with a reset, so it can run again and again.
+- **Changing the collection:** if you change endpoints, regenerate it with `node scripts/postman/build.mjs`.
+
 ## 4. API conventions
 
 - Base path `/api/v1`, JSON only, camelCase fields.
