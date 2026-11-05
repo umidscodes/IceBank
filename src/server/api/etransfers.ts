@@ -5,7 +5,7 @@ import { query, tx, one, type Db } from "../db/pool";
 import { intParam, pageResult } from "../http/params";
 import { conflict, notFound, rule, validation, type FieldError } from "../errors";
 import { customerId, audit, notifyCustomer, sendMail } from "../services/common";
-import { formatCents, money, toCents } from "@/lib/money";
+import { formatCents, formatDisplay, money, toCents } from "@/lib/money";
 import { referenceId, sha256, randomDigits } from "@/lib/crypto";
 import { isoOffset, torontoDate, startOfDay } from "@/lib/dates";
 import { EMAIL_RE, normaliseEmail } from "@/lib/validation";
@@ -133,7 +133,7 @@ async function visible(db: Db, u: Principal, id: number, lock = false) {
   return row as Record<string, unknown>;
 }
 
-const fmt = (c: bigint) => `$${formatCents(c).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+const fmt = (c: bigint) => formatDisplay(c);
 
 /** Totals that count toward the limits: PENDING and DEPOSITED only. */
 export async function limitUsage(db: Db, sb: number, custId: number, now: Date) {
